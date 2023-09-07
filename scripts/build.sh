@@ -18,6 +18,7 @@ Main()
         cmake ../ \
               -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
               -DBUILD_DOCS=ON \
+              -DPACKAGE_TESTS=ON \
               -DCMAKE_INSTALL_PREFIX=$MALLOC_BIN_DIR \
               -DCMAKE_BUILD_TYPE=$BUILD_TYPE && \
         make -j$(nproc) all                  && \

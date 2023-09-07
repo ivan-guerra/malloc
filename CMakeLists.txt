@@ -7,6 +7,12 @@ set(MALLOC_BIN_DIR "${CMAKE_SOURCE_DIR}/bin"
 set(MALLOC_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include"
     CACHE STRING       "${PROJECT_NAME} include directory.")
 
+include(FetchContent)
+FetchContent_Declare(googletest
+                     GIT_REPOSITORY https://github.com/google/googletest.git
+                     GIT_TAG release-1.12.1)
+FetchContent_MakeAvailable(googletest)
+
 set(COMMON_FLAGS
     -std=c++2a
 )
@@ -44,3 +50,12 @@ add_link_options(
 
 add_subdirectory(docs)
 add_subdirectory(malloc)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    option(PACKAGE_TESTS "build unit tests" OFF)
+    if(PACKAGE_TESTS)
+        enable_testing()
+        include(GoogleTest)
+        add_subdirectory(tests)
+    endif()
+endif()
