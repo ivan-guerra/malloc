@@ -86,7 +86,6 @@ class Malloc {
      *                            valid block of memory.
      */
     void Free(void* block);
-    void PrintFreeBlocks() const;
 
    private:
     static const int kMemMagicNum =
@@ -329,18 +328,6 @@ void Malloc<N>::Free(void* block) {
 
     InsertFreeMemBlock(insert_block);
     MergeFreeBlocks();
-}
-
-template <std::size_t N>
-    requires(N > 0)
-void Malloc<N>::PrintFreeBlocks() const {
-    MemBlock* curr = head_;
-    while (curr) {
-        std::printf("(%zu, %p) -> ", curr->size,
-                    reinterpret_cast<void*>(curr->next));
-        curr = curr->next;
-    }
-    std::cout << "NULL" << std::endl;
 }
 
 }  // namespace mem
