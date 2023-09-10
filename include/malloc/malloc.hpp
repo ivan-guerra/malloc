@@ -15,42 +15,121 @@
 
 namespace mem {
 
+/**
+ * @brief Malloc is a memory allocation utility.
+ *
+ * Malloc provides an interface for the management of "heap" memory. Malloc's
+ * template parameter specifies the amount of memory that will be requested
+ * from the OS. It is then upto the User to allocate and free memory from this
+ * pool of memory using Malloc's API.
+ */
 template <std::size_t N>
     requires(N > 0)
 class Malloc {
    public:
+    /**
+     * @brief Default constructor.
+     *
+     * When requesting memory from the OS, Malloc will request memory in units
+     * of the page size (typically 4096 bytes).
+     *
+     * @throws std::runtime_error When unable to acquire requested amount of
+     *                            memory from the OS.
+     */
     Malloc();
+
+    /**
+     * @brief Destructor
+     *
+     * Releases all memory acquired from the OS back to the OS. Never use
+     * pointers acquired via Malloc::Alloc() after destruction!
+     */
     ~Malloc();
+
+    /* Disable copying. If we supported copying, we would end up requesting
+     * memory from the OS on each copy. Not ideal. */
     Malloc(const Malloc&) = delete;
     Malloc& operator=(const Malloc&) = delete;
+
     Malloc(Malloc&& rhs);
     Malloc& operator=(Malloc&& rhs);
 
+    /** @brief Return the size of the memory acquired from the OS. */
     std::size_t RegionSize() const { return region_size_; }
+
+    /**
+     * @brief Allocate a block of memory of \p size bytes.
+     *
+     * @param size The number of bytes to allocate. Note, Malloc may allocate
+     *             more than the requested number bytes in order to support its
+     *             own internal bookkeeping data structures and alignment
+     *             requirements.
+     * @param alignment The byte alignment of the address returned. Must be a
+     *                  power of two.
+     *
+     * @throws std::invalid_argument When given an invalid size or alignment
+     *                               argument that is not a power of two.
+     * @returns A \p alignment byte aligned pointer to a chunk of memory.
+     *          \p nullptr is returned if there is insufficient memory to
+     *          satisfy the request.
+     */
     void* Alloc(std::size_t size, std::size_t alignment = 8);
+
+    /**
+     * @brief Free a block of memory previously allocated via Alloc().
+     *
+     * @param block A pointer to a block of memory previously allocated via a
+     *              call to Alloc().
+     *
+     * @throws std::runtime_error When given a \p nullptr as input or when the
+     *                            the parameter pointer does not point to a
+     *                            valid block of memory.
+     */
     void Free(void* block);
     void PrintFreeBlocks() const;
 
    private:
-    static const int kMemMagicNum = 0xDEADBEEF;
+    static const int kMemMagicNum =
+        0xDEADBEEF; /**< Magic number used to mark the end of a memory block
+                       header. */
 
+    /**
+     * @brief Representation of a free memory block node in a free memory list.
+     */
     struct MemBlock {
         std::size_t size = 0;
         MemBlock* next = nullptr;
     };
 
+    /**
+     * @brief Header attached to each allocated memory block.
+     */
     struct MemBlockHeader {
         int magic = 0;
         std::size_t size = 0;
     };
 
+    /** @brief Return \p true if \p n is a power of two. */
     bool IsPowerOfTwo(std::size_t n) const { return n && (!(n & (n - 1))); }
+
+    /**
+     * @brief Insert \p block into a list of free blocks.
+     *
+     * InsertFreeMemBlock() inserts blocks by order of their address. That is,
+     * the list of free memory blocks is sorted by address in ascending order.
+     *
+     * @param block A free memory block.
+     */
     void InsertFreeMemBlock(MemBlock* block);
+
+    /**
+     * @brief Merge adjacent memory blocks in the free list.
+     */
     void MergeFreeBlocks();
 
-    std::size_t region_size_;
-    MemBlock* mmap_start_;
-    MemBlock* head_;
+    std::size_t region_size_; /**< Amount of bytes requested from the OS. */
+    MemBlock* mmap_start_;    /**< Start of the memory mapped region. */
+    MemBlock* head_;          /**< Head of the list of free memory blocks. */
 };
 
 template <std::size_t N>
@@ -64,7 +143,7 @@ void Malloc<N>::InsertFreeMemBlock(MemBlock* block) {
         reinterpret_cast<std::uintptr_t>(block) + block->size;
     while (curr) {
         std::uintptr_t curr_block_addr = reinterpret_cast<std::uintptr_t>(curr);
-        if (block_end_addr <= curr_block_addr) {
+        if (block_end_addr <= curr_block_addr) { /* insert block before curr */
             block->next = curr;
             prev->next = block;
             inserted = true;
@@ -85,8 +164,6 @@ void Malloc<N>::InsertFreeMemBlock(MemBlock* block) {
 template <std::size_t N>
     requires(N > 0)
 void Malloc<N>::MergeFreeBlocks() {
-    if (!head_) return;
-
     MemBlock* curr = head_;
     while (curr->next) {
         std::uintptr_t adj_addr =
