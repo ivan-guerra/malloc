@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 
-project(malloc DESCRIPTION "a basic linux implementation of malloc")
+project(malloc DESCRIPTION "a linux implementation of a memory allocator")
 
 set(MALLOC_BIN_DIR "${CMAKE_SOURCE_DIR}/bin"
     CACHE STRING   "${PROJECT_NAME} binary directory.")
