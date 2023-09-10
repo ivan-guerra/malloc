@@ -17,14 +17,14 @@ namespace mem {
 
 template <std::size_t N>
     requires(N > 0)
-class MemAlloc {
+class Malloc {
    public:
-    MemAlloc();
-    ~MemAlloc();
-    MemAlloc(const MemAlloc&) = delete;
-    MemAlloc& operator=(const MemAlloc&) = delete;
-    MemAlloc(MemAlloc&& rhs);
-    MemAlloc& operator=(MemAlloc&& rhs);
+    Malloc();
+    ~Malloc();
+    Malloc(const Malloc&) = delete;
+    Malloc& operator=(const Malloc&) = delete;
+    Malloc(Malloc&& rhs);
+    Malloc& operator=(Malloc&& rhs);
 
     std::size_t RegionSize() const { return region_size_; }
     void* Alloc(std::size_t size, std::size_t alignment = 8);
@@ -55,7 +55,7 @@ class MemAlloc {
 
 template <std::size_t N>
     requires(N > 0)
-void MemAlloc<N>::InsertFreeMemBlock(MemBlock* block) {
+void Malloc<N>::InsertFreeMemBlock(MemBlock* block) {
     MemBlock dummy = {.size = 0, .next = head_};
     MemBlock* prev = &dummy;
     MemBlock* curr = head_;
@@ -84,7 +84,7 @@ void MemAlloc<N>::InsertFreeMemBlock(MemBlock* block) {
 
 template <std::size_t N>
     requires(N > 0)
-void MemAlloc<N>::MergeFreeBlocks() {
+void Malloc<N>::MergeFreeBlocks() {
     if (!head_) return;
 
     MemBlock* curr = head_;
@@ -104,8 +104,7 @@ void MemAlloc<N>::MergeFreeBlocks() {
 
 template <std::size_t N>
     requires(N > 0)
-MemAlloc<N>::MemAlloc()
-    : region_size_(N), mmap_start_(nullptr), head_(nullptr) {
+Malloc<N>::Malloc() : region_size_(N), mmap_start_(nullptr), head_(nullptr) {
     const int kPageSize = ::getpagesize();
     if (region_size_ % kPageSize) {
         region_size_ = (region_size_ / kPageSize) * kPageSize + kPageSize;
@@ -125,7 +124,7 @@ MemAlloc<N>::MemAlloc()
 
 template <std::size_t N>
     requires(N > 0)
-MemAlloc<N>::~MemAlloc() {
+Malloc<N>::~Malloc() {
     if (mmap_start_) {
         if (munmap(mmap_start_, region_size_)) {
             ::perror("munmap");
@@ -135,7 +134,7 @@ MemAlloc<N>::~MemAlloc() {
 
 template <std::size_t N>
     requires(N > 0)
-MemAlloc<N>::MemAlloc(MemAlloc&& rhs)
+Malloc<N>::Malloc(Malloc&& rhs)
     : region_size_(rhs.region_size_),
       mmap_start_(rhs.mmap_start_),
       head_(rhs.head_) {
@@ -146,7 +145,7 @@ MemAlloc<N>::MemAlloc(MemAlloc&& rhs)
 
 template <std::size_t N>
     requires(N > 0)
-MemAlloc<N>& MemAlloc<N>::operator=(MemAlloc&& rhs) {
+Malloc<N>& Malloc<N>::operator=(Malloc&& rhs) {
     if (this == &rhs) {
         return *this;
     }
@@ -164,7 +163,7 @@ MemAlloc<N>& MemAlloc<N>::operator=(MemAlloc&& rhs) {
 
 template <std::size_t N>
     requires(N > 0)
-void* MemAlloc<N>::Alloc(std::size_t size, std::size_t alignment) {
+void* Malloc<N>::Alloc(std::size_t size, std::size_t alignment) {
     if (size <= 0) {
         throw std::invalid_argument("size must be a positive integer");
     }
@@ -232,7 +231,7 @@ void* MemAlloc<N>::Alloc(std::size_t size, std::size_t alignment) {
 
 template <std::size_t N>
     requires(N > 0)
-void MemAlloc<N>::Free(void* block) {
+void Malloc<N>::Free(void* block) {
     if (!block) {
         throw std::runtime_error("cannot free NULL mem block");
     }
@@ -257,7 +256,7 @@ void MemAlloc<N>::Free(void* block) {
 
 template <std::size_t N>
     requires(N > 0)
-void MemAlloc<N>::PrintFreeBlocks() const {
+void Malloc<N>::PrintFreeBlocks() const {
     MemBlock* curr = head_;
     while (curr) {
         std::printf("(%zu, %p) -> ", curr->size,

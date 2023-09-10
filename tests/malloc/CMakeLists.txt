@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.27)
 
-set(TESTNAME mem_alloc_test)
+set(TESTNAME malloc_test)
 
 add_executable(${TESTNAME} ${TESTNAME}.cc)
 
 target_link_libraries(${TESTNAME}
     PRIVATE gtest_main
-    PRIVATE mem_alloc
+    PRIVATE malloc
 )
 
 gtest_discover_tests(${TESTNAME}
