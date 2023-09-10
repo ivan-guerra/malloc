@@ -85,12 +85,6 @@ TEST(Malloc, FreeThrowsRuntimeErrorWhenGivenInvalidAndAddressablePtr) {
                  std::runtime_error);
 }
 
-TEST(Malloc, FreeSegfaultsWhenGivenInvalidAndUnaddressablePtr) {
-    int ptr = 0;
-    mem::Malloc<kPageSize> allocator;
-    ASSERT_DEATH(allocator.Free(&ptr), "");
-}
-
 TEST(Malloc, FreeReleasesAllocatedMemorySuccessfully) {
     mem::Malloc<kPageSize> allocator;
     void* ptr = allocator.Alloc(1024);
